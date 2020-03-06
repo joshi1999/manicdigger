@@ -13,8 +13,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
-using ManicDigger;
-using ManicDigger.ClientNative;
 using ManicDigger.Common;
 using OpenTK;
 using OpenTK.Audio;
@@ -30,7 +28,7 @@ namespace ManicDigger.ClientNative
 		{
 			return (int)value;
 		}
-    
+
 		public override float MathSin(float a)
 		{
 			return (float)Math.Sin(a);
@@ -238,7 +236,8 @@ namespace ManicDigger.ClientNative
 		public SizeF TextSize(string text, FontCi font)
 		{
 			SizeF size;
-			if (textsizes.TryGetValue(new TextAndFont() {
+			if (textsizes.TryGetValue(new TextAndFont()
+			{
 				text = text,
 				size = font.GetFontSize(),
 				family = font.GetFontFamily(),
@@ -571,7 +570,7 @@ namespace ManicDigger.ClientNative
 		{
 			return GameVersion.Version;
 		}
-        
+
 		ICompression compression = new CompressionGzip();
 		public override void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret)
 		{
@@ -1053,7 +1052,7 @@ namespace ManicDigger.ClientNative
 			// FIXME: This code causes a SocketException when called multiple times.
 			// This effectively crashes the game in multiplayer server selection.
 			// Reason for this is that only a single socket exists to handle connections.
-			
+
 			this.connected = connected;
 			sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			sock.NoDelay = true;
@@ -1520,10 +1519,10 @@ namespace ManicDigger.ClientNative
 			Bitmap bmp = bmpArg;
 			bool convertedbitmap = false;
 			if ((!ALLOW_NON_POWER_OF_TWO) &&
-			    (!(BitTools.IsPowerOfTwo(bmp.Width) && BitTools.IsPowerOfTwo(bmp.Height))))
+				(!(BitTools.IsPowerOfTwo(bmp.Width) && BitTools.IsPowerOfTwo(bmp.Height))))
 			{
 				Bitmap bmp2 = new Bitmap(BitTools.NextPowerOfTwo(bmp.Width),
-					              BitTools.NextPowerOfTwo(bmp.Height));
+								  BitTools.NextPowerOfTwo(bmp.Height));
 				using (Graphics g = Graphics.FromImage(bmp2))
 				{
 					g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -1726,7 +1725,7 @@ namespace ManicDigger.ClientNative
 		}
 
 		#endregion
-    
+
 		#region Game
 
 		bool singlePlayerServerAvailable = true;
@@ -1771,19 +1770,19 @@ namespace ManicDigger.ClientNative
 		}
 
 		#endregion
-    
+
 		#region Translation
-    
+
 		public override bool LanguageNativeAvailable()
 		{
 			return true;
 		}
-    
+
 		public override Language GetLanguageHandler()
 		{
 			return new LanguageNative();
 		}
-    
+
 		#endregion
 
 		#region Event handlers
@@ -1976,21 +1975,21 @@ namespace ManicDigger.ClientNative
 			if (mousePointerLocked)
 			{
 				/*
-             * Windows: OK
-             * Cursor hides properly
-             * Cursor is trapped inside window
-             * Centering works
-             *
-             * Linux: Needs workaround
-             * Cursor hides properly
-             * Cursor is trapped inside window
-             * Centering broken
-             *
-             * Mac OS X: OK
-             * Cursor hides properly (although visible when doing Skype screencast)
-             * Centering works
-             * Opening "mission control" by gesture does not free cursor
-             */
+				* Windows: OK
+				* Cursor hides properly
+				* Cursor is trapped inside window
+				* Centering works
+				*
+				* Linux: Needs workaround
+				* Cursor hides properly
+				* Cursor is trapped inside window
+				* Centering broken
+				*
+				* Mac OS X: OK
+				* Cursor hides properly (although visible when doing Skype screencast)
+				* Centering works
+				* Opening "mission control" by gesture does not free cursor
+				*/
 
 				int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
 				int centery = window.Bounds.Top + (window.Bounds.Height / 2);
@@ -2000,8 +1999,18 @@ namespace ManicDigger.ClientNative
 			}
 		}
 
+		int lastMouseWheelTick;
 		void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
 		{
+			int currentTick = TimeMillisecondsFromStart();
+			if (currentTick - lastMouseWheelTick < 10)
+			{
+				// Limit processing of MouseWheel events
+				// This is due to a bug in OpenTK that fires two events on Windows 10
+				// Documented in issue #207
+				return;
+			}
+
 			foreach (MouseEventHandler h in mouseEventHandlers)
 			{
 				MouseWheelEventArgs args = new MouseWheelEventArgs();
@@ -2009,6 +2018,8 @@ namespace ManicDigger.ClientNative
 				args.SetDeltaPrecise(e.DeltaPrecise);
 				h.OnMouseWheel(args);
 			}
+
+			lastMouseWheelTick = currentTick;
 		}
 
 		void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
